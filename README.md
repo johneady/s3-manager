@@ -20,7 +20,7 @@ Works with any S3-compatible service, including IDrive e2, Garage, MinIO, Wasabi
 1. Clone the repository:
 
    ```sh
-   git clone https://github.com/<your-username>/s3-manager.git
+   git clone https://github.com/johneady/s3-manager.git
    cd s3-manager
    ```
 
