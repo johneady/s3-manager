@@ -1,0 +1,39 @@
+/* Toast, empty state, spinner, progress bar */
+
+#toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+
+#toast.show { opacity: 1; }
+#toast.success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+#toast.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+#toast.info { background: #f5f3ff; color: #7c3aed; border: 1px solid #c4b5fd; }
+
+.empty-state { padding: 60px 20px; text-align: center; color: #cbd5e1; }
+.empty-state .big-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#progress-bar-wrap { height: 3px; background: #e2e8f0; }
+#progress-bar { height: 100%; background: #7c3aed; width: 0%; transition: width .3s; }

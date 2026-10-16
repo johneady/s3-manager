@@ -1,0 +1,35 @@
+/* File listing table */
+
+#file-table-wrap { flex: 1; overflow: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+thead tr { background: #f8f9fc; position: sticky; top: 0; z-index: 1; }
+
+th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover, th.sorted { color: #64748b; }
+.sort-ind { display: inline-block; width: 10px; font-size: 9px; }
+
+td { padding: 9px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+tbody tr:hover { background: #f8f9fc; }
+
+.file-name { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.file-name span { color: #7c3aed; }
+.file-name span:hover { text-decoration: underline; }
+
+.size-col, .date-col { color: #94a3b8; font-size: 13px; }
+.actions-col { display: flex; gap: 6px; align-items: center; }
+
+.checkbox-col { width: 36px; }

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S3 Manager</title>
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/file-table.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+<header>
+  <h1>S3 Manager</h1>
+  <select id="manager-select" title="S3 manager" onchange="selectManager(this.value)" style="display:none"></select>
+  <div id="status-bar">Not connected</div>
+  <div id="storage-bar-wrap" style="display:none">
+    <span id="storage-label">— / 1 TB</span>
+    <div id="storage-track"><div id="storage-fill"></div></div>
+  </div>
+  <button class="btn btn-ghost btn-sm" style="margin-left:12px" onclick="openConfig()">&#9881; Settings</button>
+</header>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+
+<div class="layout">
+  <aside>
+    <div class="sidebar-header">
+      <span>Buckets</span>
+      <button class="btn btn-primary btn-sm" onclick="openNewBucket()">+ New</button>
+    </div>
+    <div id="bucket-list">
+      <div class="empty-state"><p>Connecting…</p></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <div class="breadcrumb" id="breadcrumb">
+        <span>Home</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="btn-refresh" onclick="refresh()" disabled>&#8635; Refresh</button>
+      <button class="btn btn-ghost btn-sm" id="btn-new-folder" onclick="openNewFolder()" disabled>&#128193; New Folder</button>
+      <button class="btn btn-primary btn-sm" id="btn-upload" onclick="openUpload()" disabled>&#8679; Upload</button>
+      <button class="btn btn-danger btn-sm" id="btn-delete-selected" onclick="deleteSelected()" style="display:none">&#128465; Delete Selected</button>
+    </div>
+    <div id="file-table-wrap">
+      <div class="empty-state" id="empty-state">
+        <div class="big-icon">&#128274;</div>
+        <p>Select a bucket to browse files</p>
+      </div>
+      <table id="file-table" style="display:none">
+        <thead>
+          <tr>
+            <th class="checkbox-col"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+            <th class="sortable sorted" data-sort="name" onclick="setSort('name')">Name <span class="sort-ind">▲</span></th>
+            <th class="sortable" data-sort="size" onclick="setSort('size')">Size <span class="sort-ind"></span></th>
+            <th class="sortable" data-sort="date" onclick="setSort('date')">Last Modified <span class="sort-ind"></span></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="file-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Config Modal -->
+<div id="config-panel" class="overlay hidden">
+  <div class="modal">
+    <h2>&#9881; Credentials: <span id="cfg-manager-name"></span></h2>
+    <div class="form-group">
+      <label>Access Key ID</label>
+      <input type="text" id="cfg-access-key">
+    </div>
+    <div class="form-group">
+      <label>Secret Access Key</label>
+      <input type="password" id="cfg-secret-key">
+    </div>
+    <div class="form-group">
+      <label>Endpoint URL</label>
+      <input type="text" id="cfg-endpoint" placeholder="https://m7f0.ca.idrivee2-21.com">
+    </div>
+    <div class="form-group">
+      <label>Region</label>
+      <input type="text" id="cfg-region">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" style="margin-right:auto" onclick="resetConfig()" title="Discard browser-saved changes">Reset to defaults</button>
+      <button class="btn btn-ghost" onclick="closeModal('config-panel')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveConfig()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="upload-panel" class="overlay hidden">
+  <div class="modal">
+    <h2>&#8679; Upload Files</h2>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('upload-file-input').click()">
+      <div style="font-size:36px">&#128196;</div>
+      <p>Click or drag &amp; drop files here</p>
+    </div>
+    <input type="file" id="upload-file-input" multiple style="display:none" onchange="handleFileSelect(this.files)">
+    <ul id="upload-list"></ul>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeUpload()">Close</button>
+      <button class="btn btn-primary" id="btn-do-upload" onclick="doUpload()" disabled>Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Folder Modal -->
+<div id="folder-panel" class="overlay hidden">
+  <div class="modal">
+    <h2>&#128193; New Folder</h2>
+    <div class="form-group">
+      <label>Folder Name</label>
+      <input type="text" id="folder-name-input" placeholder="my-folder" onkeydown="if(event.key==='Enter')createFolder()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('folder-panel')">Cancel</button>
+      <button class="btn btn-primary" onclick="createFolder()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Bucket Modal -->
+<div id="bucket-panel" class="overlay hidden">
+  <div class="modal">
+    <h2>&#128274; New Bucket</h2>
+    <div class="form-group">
+      <label>Bucket Name</label>
+      <input type="text" id="bucket-name-input" placeholder="my-new-bucket" onkeydown="if(event.key==='Enter')createBucket()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('bucket-panel')">Cancel</button>
+      <button class="btn btn-primary" onclick="createBucket()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Bucket Modal -->
+<div id="delete-bucket-panel" class="overlay hidden">
+  <div class="modal">
+    <h2 style="color:#dc2626">&#9888; Delete Bucket</h2>
+    <p style="font-size:14px;color:#475569;margin-bottom:16px">
+      Are you sure you want to permanently delete the bucket
+      <strong id="confirm-delete-bucket-name" style="color:#dc2626"></strong>?
+    </p>
+    <div class="warning-box">
+      &#9888; This action cannot be undone. Only empty buckets can be deleted.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('delete-bucket-panel')">Cancel</button>
+      <button class="btn btn-danger-solid" id="btn-confirm-delete-bucket" onclick="confirmDeleteBucket()">Delete Bucket</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/managers.local.js"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/buckets.js"></script>
+<script src="js/file-list.js"></script>
+<script src="js/file-actions.js"></script>
+<script src="js/upload.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
